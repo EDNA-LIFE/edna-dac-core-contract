@@ -1,0 +1,1 @@
+edna-dac-core-contract
