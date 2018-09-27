@@ -3,7 +3,7 @@
  *  @copyright defined in eos/LICENSE.txt
 */
 
-#include "ednatoken.hpp"
+#include "ednadactoken.hpp"
 #include <math.h>
 
 /*******************************************************************************
@@ -13,7 +13,7 @@ void ednadactoken::globalalarms(){
     ednadactoken::general_proposal_check();
     ednadactoken::memberhip_check();
     ednadactoken::custodian_check();
-    
+
 };
 
 
