@@ -15,7 +15,7 @@ using namespace eosio;
 using std::string;
 using eosio::const_mem_fun;
 
-class ednatoken : public contract
+class ednadactoken : public contract
 {
   public:
     ednadactoken(account_name self) : contract(self) {}
@@ -24,13 +24,39 @@ class ednatoken : public contract
 
     inline asset get_balance(account_name owner, symbol_name sym) const;
 
-
     // @abi action
     void create(account_name issuer, asset maximum_supply);
 
     // @abi action
+    void issue(account_name to, asset quantity, string memo);
 
-    void join(acount_name name);
+    // @abi action
+    void setmemfund(account_name _memfund);
+
+    // @abi action
+    void addmember(account_name _account, string tele_user, asset quantity);
+
+    // @abi action
+    void deletemember(account_name _account);
+
+    // @abi action
+    void renew_membership(account_name _account);
+
+    // @abi action
+  //  void join(account_name name);
+
+    // @abi action
+    void updatemember(account_name _account, string _upd_type, uint8_t _param_i8, uint32_t _param32, uint64_t _parm64, string _param_s, asset _param_asset);
+
+    // @abi action
+    void new_general_proposal(account_name _from, string _title, string _text);
+
+    // @abi action
+    void general_proposal_check();
+
+    // @abi action
+    void transfer(account_name from, account_name to, asset quantity, string memo);
+
 
   private:
 
@@ -58,7 +84,7 @@ class ednatoken : public contract
     const uint8_t   GEN_UNSUPPORTED = 2;
     const uint8_t   GEN_ESCALATED = 3;
     const uint8_t   CUSTO_DEFEATED = 4;
-    const uint8_t   CUSTO_ PASSED = 5;
+    const uint8_t   CUSTO_PASSED = 5;
     const uint8_t   CUSTO_STALLED_1 = 6;
     const uint8_t   CUSTO_STALLED_2 = 7;
     const uint8_t   CUSTO_STALLED_3 = 8;
@@ -115,14 +141,13 @@ class ednatoken : public contract
       account_name      	account;
       uint8_t           	member_status;                                        // see possible statuses above
       uint8_t             custodial_status;                                     // see possible statuses above
-      uint64_t            election_id;                                          // (if member is running for election)
       string            	telegram_user;
       uint32_t            proposal_count;
       uint32_t            vote_count;
       uint32_t            completed_service_count;
-      uint32_t            completed_service_value;
       uint32_t            research_opt_in_count;
-      uint32_t            research_value_earned;
+      asset               completed_service_value;
+      asset               research_value_earned;
       asset               total_value_earned;
       asset               member_balance;
       string              ipfs_member_bio;
@@ -135,12 +160,12 @@ class ednatoken : public contract
       uint64_t            spare1;
       uint64_t            spare2;
       string              spare3;
-      assets              spare4;
-    };
+      asset               spare4;
+
 
   uint64_t      primary_key() const { return member_id; }
 
-  EOSLIB_SERIALIZE (member, (member_id)(account)(member_status)(custodial_status)(stake)(telegram_user)(proposal_count)
+  EOSLIB_SERIALIZE (member, (member_id)(account)(member_status)(custodial_status)(telegram_user)(proposal_count)
   (vote_count)(completed_service_count)(completed_service_value)(research_opt_in_count)(research_value_earned)(total_value_earned)(member_balance)
   (ipfs_traits_data)(ipfs_gen_data)(joined_date)(spare1)(spare2)(spare3)(spare4));
 };
@@ -167,10 +192,7 @@ typedef eosio::multi_index<N(members), member> member_table;
   };
 
 typedef eosio::multi_index<N(proposals), proposal,
-    indexed_by<N(status),
-        const_mem_fun<proposal, uint64_t, &propsal::proposal_by_type
-        >
-> proposal_table;
+    indexed_by<N(status),const_mem_fun<proposal, uint64_t, &proposal::by_status>>>proposal_table;
 
   // @abi action
   void proposal_by_type(uint8_t _type);
@@ -188,7 +210,7 @@ typedef eosio::multi_index<N(proposals), proposal,
     uint8_t           	average_rating;
     uint32_t          	times_rated;
 
-    uint64_t      primary_key() const { return prop_id; }
+    uint64_t      primary_key() const { return service_id; }
 
     EOSLIB_SERIALIZE (service, (service_id)(member_id)(service_status)(ipfs_service_descr)(service_cost)(start_date)(projected_end_date)
     (actual_end_date)(average_rating)(times_rated));
@@ -224,8 +246,10 @@ typedef eosio::multi_index<N(services), service> service_table;
     uint8_t  			agree_eos_constitution;
 
     uint64_t      primary_key() const { return research_id; }
-    EOSLIB_SERIALIZE (research, (service_id)(member_id)(service_status)(ipfs_service_descr)(service_cost)(start_date)(projected_end_date)
-    (actual_end_date)(average_rating)(times_rated));
+    EOSLIB_SERIALIZE (research, (research_id)(edna_sponsor_id)(project_title)(research_status)(company_entity)(contact)(email)(telephone)(website)
+    (number_genomes_sought)(number_of_opt_ins)(genome_type)(ipfs_hash_traits_sought)(ipfs_hash_funding_source_disclosure)(ipfs_hash_research_purpose)
+    (ipfs_hash_publications_list)(ipfs_hash_notes_comments)(proposed_payment)(surety_bond_posted)(profit_sharing_offered)
+    (agree_terms_of_service)(agree_edna_intended_use_policy)(agree_edna_constitution)(agree_eos_constitution));
   };
 
   typedef eosio::multi_index<N(researches), research> research_table;
@@ -298,10 +322,13 @@ struct vote {
   uint64_t        prop_elect_id;
   uint8_t         prop_type;
   uint64_t        member_id;
-  uint8_t         vote;
+  uint8_t         how_vote;
+
   uint64_t  primary_key() const { return vote_id; }
-  EOSLIB_SERIALIZE (vote, (vote_id)(prop_elect_id)(prop_type)(member_id)(vote));
+
+  EOSLIB_SERIALIZE (vote, (vote_id)(prop_elect_id)(prop_type)(member_id)(how_vote));
   };
+
 typedef eosio::multi_index<N(votes), vote> vote_table;
 
 
@@ -312,17 +339,11 @@ typedef eosio::multi_index<N(votes), vote> vote_table;
       uint64_t      config_id;
       uint64_t      member_count;                                               // current active membership
       uint8_t       new_members_allowed = 1;                                    // non-zero = taking on new members
-      uint8_t       new_members_minimum_stake = 1;                              // minimum stake to this contract for membership
       uint32_t      mem_ttl = (60 * 60 * 24 * 365);                             // duration of membership - must renew after (-1 to disable renewals)
-
-
       uint64_t      proposal_escalation = 40;                                   // % of members that must vote on a general proposal (+ or -) to auto-escalate to custodian action
       uint32_t      mem_vote_ttl = (60 * 60 * 24 * 7);                          // time before a member proposal is removed or converted to a custodial vote
-
       uint32_t      custodian_vote_ttl = (60 * 60 * 24 * 2);                    // time betwwen stalled custodial votes
-
       uint64_t      referendum_passage = 51;                                    // % of membership that must approve or defeat a referendum
-
       uint64_t      nominations_ttl = (60 * 60 * 24 * 3);
       uint64_t      elections_ttl = (60 * 60 * 24 * 5);
       uint8_t       custodian_count = 12;
@@ -331,16 +352,17 @@ typedef eosio::multi_index<N(votes), vote> vote_table;
       uint64_t      next_cust_election_due;                                     // datetime of next election
       asset         dac_funds_main;
       asset         dac_funds_approved_spend;
-
+      asset         mem_fee = asset{static_cast<int64_t>(1), string_to_symbol(4, "EDNA")};
+      account_name  mem_fund;                                              // minimum fee to this contract for membership
       uint64_t      spare1;
       uint64_t      spare2;
       uint64_t      spare3;
 
       uint64_t      primary_key() const { return config_id; }
 
-      EOSLIB_SERIALIZE (config, (config_id)(member_count)(new_members_allowed)(new_members_minimum_stake)(mem_time2live)(nominations_time2live)(elections_time2live)
-      (proposal_escalation)(mem_vote_time2live)(custodial_majority)(referendum_passage)(custodian_time2live)(custodian_vote_time2live)(next_cust_election_due)
-      (dac_funds_main)(dac_funds_approved_spend)(spare1)(spare2)(spare3));
+      EOSLIB_SERIALIZE (config, (config_id)(member_count)(new_members_allowed)(mem_fee)(mem_ttl)(nominations_ttl)(elections_ttl)
+      (proposal_escalation)(mem_vote_ttl)(custodial_majority)(referendum_passage)(custodian_ttl)(custodian_vote_ttl)(next_cust_election_due)
+      (dac_funds_main)(dac_funds_approved_spend)(mem_fund)(spare1)(spare2)(spare3));
   };
 
   typedef eosio::multi_index<N(configs), config> config_table;
@@ -349,76 +371,70 @@ typedef eosio::multi_index<N(votes), vote> vote_table;
 
 
 
+// @abi table accounts i64
+struct account
+{
+    asset balance;
+    uint64_t primary_key() const { return balance.symbol.name(); }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // @abi table accounts i64
-    struct account
-    {
-        asset balance;
-        uint64_t primary_key() const { return balance.symbol.name(); }
-
-        EOSLIB_SERIALIZE (account, (balance));
-    };
-
-    // @abi table stat i64
-    struct currencystat
-    {
-        asset supply;
-        asset max_supply;
-        account_name issuer;
-
-        uint64_t primary_key() const { return supply.symbol.name(); }
-
-        EOSLIB_SERIALIZE (currencystat, (supply)(max_supply)(issuer));
-    };
-
-    typedef eosio::multi_index<N(accounts), account> accounts;
-    typedef eosio::multi_index<N(stat), currencystat> stats;
-
-    void sub_balance(account_name owner, asset value);
-    void add_balance(account_name owner, asset value, account_name ram_payer);
-
-    void sub_stake(account_name owner, asset value);
-    void add_stake(account_name owner, asset value);
-
-  public:
-    struct transfer_args
-    {
-        account_name from;
-        account_name to;
-        asset quantity;
-        string memo;
-    };
+    EOSLIB_SERIALIZE (account, (balance));
 };
 
 
-asset ednatoken::get_supply(symbol_name sym) const
+
+// @abi table stat i64
+struct currencystat
 {
-    stats statstable(_self, sym);
-    const auto &st = statstable.get(sym);
-    return st.supply;
+    asset supply;
+    asset max_supply;
+    account_name issuer;
+
+    uint64_t primary_key() const { return supply.symbol.name(); }
+
+    EOSLIB_SERIALIZE (currencystat, (supply)(max_supply)(issuer));
+};
+
+typedef eosio::multi_index<N(accounts), account> accounts;
+typedef eosio::multi_index<N(stat), currencystat> stats;
+
+void sub_balance(account_name owner, asset value);
+void add_balance(account_name owner, asset value, account_name ram_payer);
+
+void sub_stake(account_name owner, asset value);
+void add_stake(account_name owner, asset value);
+
+
+struct transfer_args
+{
+    account_name from;
+    account_name to;
+    asset quantity;
+    string memo;
+};
+};
+
+
+asset ednadactoken::get_supply(symbol_name sym) const
+{
+stats statstable(_self, sym);
+const auto &st = statstable.get(sym);
+return st.supply;
+}
+
+asset ednadactoken::get_balance(account_name owner, symbol_name sym) const
+{
+accounts accountstable(_self, owner);
+const auto &ac = accountstable.get(sym);
+return ac.balance;
 }
 
 
-asset ednatoken::get_balance(account_name owner, symbol_name sym) const
-{
-    accounts accountstable(_self, owner);
-    const auto &ac = accountstable.get(sym);
-    return ac.balance;
-}
 
-EOSIO_ABI( ednatoken,(transfer)()()()()()()()()()())
+
+
+
+
+
+
+EOSIO_ABI( ednadactoken,(addmember)(deletemember)(renew_membership)(updatemember)(new_general_proposal)
+(general_proposal_check)(transfer))
