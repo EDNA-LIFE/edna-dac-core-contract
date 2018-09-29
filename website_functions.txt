@@ -40,7 +40,7 @@ Name          |Type            |Description/Notes
     MEM_STATUS = 1;   	     //requires a valid member status in the param_i8 parameter: restricted to the following:
                                 MEM_QUIT = 11;
 
-		CUST_STATUS = 2;	       //requires a valid custodian status in the param_i8 parameter restricted to the following:
+    CUST_STATUS = 2;	       //requires a valid custodian status in the param_i8 parameter restricted to the following:
                                 CUSTO_NOMINATED = 2;       //can self-nominate
                                 CUSTO_DECLINED = 3;        //declines nomination
                                 CUSTO_RUNNING = 4;         //accepts nomination
@@ -48,7 +48,7 @@ Name          |Type            |Description/Notes
 
     TELE_USER = 3;           //updates the telegram user-name for the member requires a string in param_string above
 
-		PROP_COUNT = 4;          //adds a proposal - not valid coming from the website in this function
+    PROP_COUNT = 4;          //adds a proposal - not valid coming from the website in this function
 
     VOTE_COUNT = 5;		       //adds a vote - not valid coming from the website in this function
 
