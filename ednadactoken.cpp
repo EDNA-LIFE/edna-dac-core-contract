@@ -3,10 +3,10 @@
  *  @copyright defined in eos/LICENSE.txt
 */
 
-#include "ednadactoken.hpp"
+#include "ednadac.hpp"
 #include <math.h>
 
-void ednadactoken::create(account_name issuer,
+void ednadac::create(account_name issuer,
                        asset maximum_supply)
 {
     require_auth(_self);
@@ -27,9 +27,9 @@ void ednadactoken::create(account_name issuer,
     });
 }
 
-void ednadactoken::issue(account_name to, asset quantity, string memo)
+void ednadac::issue(account_name to, asset , string memo)
 {
-    auto sym = quantity.symbol;
+    auto sym = .symbol;
     eosio_assert(sym.is_valid(), "invalid symbol name");
     eosio_assert(memo.size() <= 256, "memo has more than 256 bytes");
 
@@ -40,49 +40,49 @@ void ednadactoken::issue(account_name to, asset quantity, string memo)
     const auto &st = *existing;
 
     require_auth(st.issuer);
-    eosio_assert(quantity.is_valid(), "invalid quantity");
-    eosio_assert(quantity.amount > 0, "must issue positive quantity");
+    eosio_assert(.is_valid(), "invalid ");
+    eosio_assert(.amount > 0, "must issue positive ");
 
-    eosio_assert(quantity.symbol == st.supply.symbol, "symbol precision mismatch");
-    eosio_assert(quantity.amount <= st.max_supply.amount - st.supply.amount, "quantity exceeds available supply");
+    eosio_assert(.symbol == st.supply.symbol, "symbol precision mismatch");
+    eosio_assert(.amount <= st.max_supply.amount - st.supply.amount, " exceeds available supply");
 
     statstable.modify(st, 0, [&](auto &s) {
-        s.supply += quantity;
+        s.supply += ;
     });
 
-    add_balance(st.issuer, quantity, st.issuer);
+    add_balance(st.issuer, , st.issuer);
 
     if (to != st.issuer)
     {
-        SEND_INLINE_ACTION(*this, transfer, {st.issuer, N(active)}, {st.issuer, to, quantity, memo});
+        SEND_INLINE_ACTION(*this, transfer, {st.issuer, N(active)}, {st.issuer, to, , memo});
     }
 }
 
-void ednadactoken::transfer(account_name from,
+void ednadac::transfer(account_name from,
                          account_name to,
-                         asset quantity,
+                         asset ,
                          string memo)
 {
     eosio_assert(from != to, "cannot transfer to self");
     require_auth(from);
     eosio_assert(is_account(to), "to account does not exist");
-    auto sym = quantity.symbol.name();
+    auto sym = .symbol.name();
     stats statstable(_self, sym);
     const auto &st = statstable.get(sym);
 
     require_recipient(from);
     require_recipient(to);
 
-    eosio_assert(quantity.is_valid(), "invalid quantity");
-    eosio_assert(quantity.amount > 0, "must transfer positive quantity");
-    eosio_assert(quantity.symbol == st.supply.symbol, "symbol precision mismatch");
+    eosio_assert(.is_valid(), "invalid ");
+    eosio_assert(.amount > 0, "must transfer positive ");
+    eosio_assert(.symbol == st.supply.symbol, "symbol precision mismatch");
     eosio_assert(memo.size() <= 256, "memo has more than 256 bytes");
 
-    sub_balance(from, quantity);
-    add_balance(to, quantity, from);
+    sub_balance(from, );
+    add_balance(to, , from);
 }
 
-void ednadactoken::setmemfund(account_name _memfund)
+void ednadac::setmemfund(account_name _memfund)
 {
     require_auth(_self);
     config_table c_t(_self, _self);
@@ -105,10 +105,10 @@ void ednadactoken::setmemfund(account_name _memfund)
 /*******************************************************************************
  * Global Management *******************************************************
  *******************************************************************************/
-//void ednadactoken::globalalarms(){
-//    ednadactoken::general_proposal_check();
-//    ednadactoken::memberhip_check();
-//    ednadactoken::custodian_check();
+//void ednadac::globalalarms(){
+//    ednadac::general_proposal_check();
+//    ednadac::memberhip_check();
+//    ednadac::custodian_check();
 
 //};
 
@@ -118,7 +118,7 @@ void ednadactoken::setmemfund(account_name _memfund)
  * Membership Management *******************************************************
  *******************************************************************************/
 
-void ednadactoken::addmember(account_name _account, string tele_user, asset quantity){
+void ednadac::addmember(account_name _account, string tele_user, asset ){
   require_auth(_account);
   config_table c_t (_self, _self);
   auto c_itr = c_t.find(0);
@@ -131,16 +131,16 @@ void ednadactoken::addmember(account_name _account, string tele_user, asset quan
   auto itr = m_t.find(_account);
   eosio_assert(itr == m_t.end(), "Account already is a DAC member.");
 
-  auto sym = quantity.symbol.name();
+  auto sym = .symbol.name();
   stats statstable(_self, sym);
   const auto &st = statstable.get(sym);
 
-  eosio_assert(quantity.is_valid(), "invalid quantity");
-  eosio_assert(quantity.amount > 0, "must transfer positive quantity");
-  eosio_assert(quantity.symbol == st.supply.symbol, "symbol precision mismatch");
+  eosio_assert(.is_valid(), "invalid ");
+  eosio_assert(.amount > 0, "must transfer positive ");
+  eosio_assert(.symbol == st.supply.symbol, "symbol precision mismatch");
 
-  sub_balance(_account, quantity);
-  add_balance(_mem_fund, quantity, _account);
+  sub_balance(_account, );
+  add_balance(_mem_fund, , _account);
 
   m_t.emplace(_self, [&](auto &c) {
     c.member_id = m_t.available_primary_key();
@@ -165,17 +165,7 @@ void ednadactoken::addmember(account_name _account, string tele_user, asset quan
   });
 }
 
-void ednadactoken::deletemember(account_name _account){
-  // archive members records...propsals, voting,
-
-  // give back ram for voting table rease all rows for above
-
-
-
-
-}
-
-void ednadactoken::renew_membership(account_name _account){
+void ednadac::renew_membership(account_name _account){
 
   member_table m_t(_self, _self);
   auto itr = m_t.find(_account);
@@ -190,8 +180,8 @@ void ednadactoken::renew_membership(account_name _account){
   stats statstable(_self, sym);
   const auto &st = statstable.get(sym);
 
-  eosio_assert(renewal_fee.is_valid(), "invalid quantity");
-  eosio_assert(renewal_fee.amount > 0, "must transfer positive quantity");
+  eosio_assert(renewal_fee.is_valid(), "invalid ");
+  eosio_assert(renewal_fee.amount > 0, "must transfer positive ");
   eosio_assert(renewal_fee.symbol == st.supply.symbol, "symbol precision mismatch");
 
   sub_balance(_account, renewal_fee);
@@ -202,9 +192,9 @@ void ednadactoken::renew_membership(account_name _account){
     });
 }
 
- void ednadactoken::updatemember(
+ void ednadac::updatemember(
    account_name _account,
-   string _upd_type,
+   uint8_t _upd_type,
    uint8_t _param_i8,
    uint32_t _param32,
    uint64_t _parm64,
@@ -222,61 +212,88 @@ void ednadactoken::renew_membership(account_name _account){
  }
  eosio_assert(renewal_due == false, "membership expired, please renew.");
 
+ const uint8_t    = 1;
+ const uint8_t    = 2;
+ const uint8_t    = 3;
+ const uint8_t    = 4;
+ const uint8_t   COMP_SERVICE = 5;
+ const uint8_t   COMP_RESEARCH = 6;
+ const uint8_t   MEM_BALANCE = 7;
+ const uint8_t   MEM_BIO = 8;
+ const uint8_t   MEM_PHOTO = 9;
+ const uint8_t   MEM_VIDEO = 10;
+ const uint8_t   MEM_TRAITS = 11;
+ const uint8_t   MEM_GEN_DATA = 12;
+
+
+
+
    m_t.modify(itr, _self, [&](auto &c) {
-      if(_upd_type == "member_status"){
+      if(_upd_type == MEM_STATUS){
         c.member_status = _param_i8;
+        if (_param_i8 == MEM_BANNED || _param_i8 == MEM_QUIT){
+            ednadac::archivemember(_account);
+        }
       }
-      if(_upd_type == "custodial_status"){
+      if(_upd_type == CUST_STATUS){
         c.custodial_status = _param_i8;
       }
-      if(_upd_type == "telegram_user"){
+      if(_upd_type == TELE_USER){
         c.telegram_user = _param_i8;
       }
-      if(_upd_type == "proposal_count"){
+      if(_upd_type == PROP_COUNT){
         c.proposal_count += 1;
       }
-      if(_upd_type == "vote_count"){
+      if(_upd_type == VOTE_COUNT){
         c.vote_count += 1;
       }
-      if(_upd_type == "completed_service"){
+      if(_upd_type == COMP_SERVICE){
         c.completed_service_count += 1;
         c.completed_service_value += _param_asset;
         c.total_value_earned += _param_asset;
       }
-      if(_upd_type == "research_value_earned"){
+      if(_upd_type == COMP_RESEARCH){
         c.completed_service_count += 1;
         c.research_value_earned += _param_asset;
         c.total_value_earned += _param_asset;
       }
-      if(_upd_type == "member_balance" && _param_s == "add"){
+      if(_upd_type == MEM_BALANCE && _param_s == "add"){         //GGS - need money moving checks here
         c.member_balance += _param_asset;
       }
-      if(_upd_type == "member_balance" && _param_s == "rem"){
+      if(_upd_type == MEM_BALANCE && _param_s == "rem"){         //GGS - need money moving checks here
         c.member_balance -= _param_asset;
       }
-      if(_upd_type == "ipfs_member_bio"){
+      if(_upd_type == MEM_BIO){
         c.ipfs_member_bio = _param_s;
       }
-      if(_upd_type == "ipfs_member_photo"){
+      if(_upd_type == MEM_PHOTO){
         c.ipfs_member_photo = _param_s;
       }
-      if(_upd_type == "ipfs_member_video"){
+      if(_upd_type == MEM_VIDEO){
         c.ipfs_member_video = _param_s;
       }
-      if(_upd_type == "ipfs_traits_data"){
+      if(_upd_type == MEM_TRAITS){
         c.ipfs_traits_data = _param_s;
       }
-      if(_upd_type == "ipfs_gen_data"){
+      if(_upd_type == MEM_GEN_DATA){
         require_auth(_self);
         c.ipfs_traits_data = _param_s;
       }
     });
 }
 
+void ednadac::archivemember(account_name _account){
+  // archive members records...propsals, voting,
 
+  // give back ram for voting table rease all rows for above
+
+
+
+
+}
 // Proposal management actions
 
-void ednadactoken::new_general_proposal(account_name _from, string _title, string _text){
+void ednadac::new_general_proposal(account_name _from, string _title, string _text){
 
   uint64_t member_id;
   uint32_t mem_vote_ttl;
@@ -303,7 +320,7 @@ void ednadactoken::new_general_proposal(account_name _from, string _title, strin
   });
 }
 
-void ednadactoken::general_proposal_check(){
+void ednadac::general_proposal_check(){
 
 
 
@@ -388,7 +405,7 @@ const uint8_t   REF_PASSED = 11;        //active archive
 
 
 
-void ednadactoken::sub_balance(account_name owner, asset value)
+void ednadac::sub_balance(account_name owner, asset value)
 {
     accounts from_acnts(_self, owner);
     const auto &from = from_acnts.get(value.symbol.name(), "no balance object found");
@@ -406,7 +423,7 @@ void ednadactoken::sub_balance(account_name owner, asset value)
 /*
 *   Add ballance can be sent here by anyone
 */
-void ednadactoken::add_balance(account_name owner, asset value, account_name ram_payer)
+void ednadac::add_balance(account_name owner, asset value, account_name ram_payer)
 {
     accounts to_acnts(_self, owner);
     auto to = to_acnts.find(value.symbol.name());

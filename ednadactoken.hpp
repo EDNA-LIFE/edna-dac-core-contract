@@ -15,10 +15,10 @@ using namespace eosio;
 using std::string;
 using eosio::const_mem_fun;
 
-class ednadactoken : public contract
+class ednadac : public contract
 {
   public:
-    ednadactoken(account_name self) : contract(self) {}
+    ednadac(account_name self) : contract(self) {}
 
     inline asset get_supply(symbol_name sym) const;
 
@@ -37,16 +37,14 @@ class ednadactoken : public contract
     void addmember(account_name _account, string tele_user, asset quantity);
 
     // @abi action
+    void updatemember(account_name _account, string _upd_type, uint8_t _param_i8, uint32_t _param32, uint64_t _parm64, string _param_s, asset _param_asset);
+
+    // @abi action
     void deletemember(account_name _account);
 
     // @abi action
     void renew_membership(account_name _account);
 
-    // @abi action
-  //  void join(account_name name);
-
-    // @abi action
-    void updatemember(account_name _account, string _upd_type, uint8_t _param_i8, uint32_t _param32, uint64_t _parm64, string _param_s, asset _param_asset);
 
     // @abi action
     void new_general_proposal(account_name _from, string _title, string _text);
@@ -60,6 +58,34 @@ class ednadactoken : public contract
 
   private:
 
+    // membership statuses
+    const uint8_t   MEM_MEMBER = 1;
+    const uint8_t   MEM_IN_QUEUE = 2;
+    const uint8_t   MEM_PAID_KIT = 3;
+    const uint8_t   MEM_KIT_SHIPPED = 4;
+    const uint8_t   MEM_KIT_IN_LAB = 5;
+    const uint8_t   MEM_DNA_PROCESSED = 6;
+    const uint8_t   MEM_DNA_ON_CHAIN = 7;
+    const uint8_t   MEM_LIFETIME = 8;
+    const uint8_t   MEM_SUSPENDED = 9;
+    const uint8_t   MEM_BANNED = 10;
+    const uint8_t   MEM_QUIT = 11;
+
+    // member record update types
+    const uint8_t   MEM_STATUS = 1;
+    const uint8_t   CUST_STATUS = 2;
+    const uint8_t   TELE_USER = 3;
+    const uint8_t   PROP_COUNT = 4;
+    const uint8_t   VOTE_COUNT = 5;
+    const uint8_t   COMP_SERVICE = 6;
+    const uint8_t   COMP_RESEARCH = 7;
+    const uint8_t   MEM_BALANCE = 8;
+    const uint8_t   MEM_BIO = 9;
+    const uint8_t   MEM_PHOTO = 10;
+    const uint8_t   MEM_VIDEO = 11;
+    const uint8_t   MEM_TRAITS = 12;
+    const uint8_t   MEM_GEN_DATA = 13;
+
     // types of votes & proposals
     const uint8_t   GENERAL_PROPOSAL = 1;
     const uint8_t   CUSTODIAL_MATTER = 2;
@@ -68,16 +94,7 @@ class ednadactoken : public contract
     const uint8_t   RESEARCH_PROPOSAL = 5;
     const uint8_t   IMPEACHMENT_PROCEEDING = 6;
 
-    // membership statuses
-    const uint8_t   MEM_MEMBER = 1;
-    const uint8_t   MEM_PAID_KIT = 2;
-    const uint8_t   MEM_KIT_SHIPPED = 3;
-    const uint8_t   MEM_KIT_IN_LAB = 4;
-    const uint8_t   MEM_DNA_ON_CHAIN = 5;
-    const uint8_t   MEM_LIFETIME = 6;
-    const uint8_t   MEM_SUSPENDED = 7;
-    const uint8_t   MEM_BANNED = 8;
-  	const uint8_t   MEM_ABANDONED = 9;
+
 
     // Vote statuses
     const uint8_t   GEN_NEW = 1;
@@ -413,28 +430,19 @@ struct transfer_args
 };
 };
 
-
-asset ednadactoken::get_supply(symbol_name sym) const
+asset ednadac::get_supply(symbol_name sym) const
 {
 stats statstable(_self, sym);
 const auto &st = statstable.get(sym);
 return st.supply;
 }
 
-asset ednadactoken::get_balance(account_name owner, symbol_name sym) const
+asset ednadac::get_balance(account_name owner, symbol_name sym) const
 {
 accounts accountstable(_self, owner);
 const auto &ac = accountstable.get(sym);
 return ac.balance;
 }
 
-
-
-
-
-
-
-
-
-EOSIO_ABI( ednadactoken,(addmember)(deletemember)(renew_membership)(updatemember)(new_general_proposal)
+EOSIO_ABI( ednadac,(addmember)(deletemember)(renew_membership)(updatemember)(new_general_proposal)
 (general_proposal_check)(transfer))

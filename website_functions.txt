@@ -1,0 +1,91 @@
+
+
+// Public Functions for Members
+
+***************************************************************************************************************************************
+
+Name: ednadac::addmember(account, tele_user, dues )
+
+Description: Adds a member to the DAC when they join - Requires a telegram user ID and a # of EDNA Tokens
+Parameters: ( * = required )
+
+Name          |Type            |Description/Notes
+*account      |account_name    |name of the EOS account joining the dac
+*tele_user    |string          |Telegram user name
+*dues         |asset           |Member dues in EDNA - retrieved from config table "mem_fee"
+
+***************************************************************************************************************************************
+
+Name: ednadac::renew_membership(account)
+
+Description: renews membership in the dac for a term - requires a # of EDNA Tokens
+Parameters: ( * = required )
+
+Name          |Type            |Description/Notes
+*account      |account_name    |Name of the EOS account renewing dac membership
+                               |Member dues in EDNA - retrieved from config table "mem_fee"
+                               |Duration of renewal - retrieved from config table "mem_ttl" (member time-to-live)
+
+***************************************************************************************************************************************
+
+Name: ednadac::updatemember(account, upd_type, param_i8, param32, parm64, param_string, param_asset)
+
+Description: updates a members record - some updates are not allowed by members (see custupdatemember & adminupdatemember below)
+Parameters: ( * = required )
+
+Name          |Type            |Description/Notes
+*account      |account_name    |Name of the EOS account being updated
+*upd_type     |uint8_t         |an integer constant denotes the type of update occurring:
+
+    MEM_STATUS = 1;   	     //requires a valid member status in the param_i8 parameter: restricted to the following:
+                                MEM_QUIT = 11;
+
+		CUST_STATUS = 2;	       //requires a valid custodian status in the param_i8 parameter restricted to the following:
+                                CUSTO_NOMINATED = 2;       //can self-nominate
+                                CUSTO_DECLINED = 3;        //declines nomination
+                                CUSTO_RUNNING = 4;         //accepts nomination
+                                CUSTO_RETIRED = 8;         //can not be nominated
+
+    TELE_USER = 3;           //updates the telegram user-name for the member requires a string in param_string above
+
+
+
+		PROP_COUNT = 4;          //adds a proposal - not valid coming from the website in this function
+		VOTE_COUNT = 5;		       //adds a vote - not valid coming from the website in this function
+		COMP_SERVICE = 6;	      //adds a completed service count and a service value - not valid coming from the website in this function
+    COMP_RESEARCH = 7;      //adds a completed research participation count and value - not valid coming from the website in this function
+
+    MEM_BALANCE = 8;        //adds or subtracts from the dac members EDNA account - requires "add" or "rem" in the param_string above and
+                              an EDNA value in param_asset
+
+    MEM_BIO = 9;            //stores the IPFS hash string pointing to the members bio - requires a string in param_string above
+
+    MEM_PHOTO = 10;          //stores the IPFS hash string pointing to the members photo - requires a string in param_string above
+
+    MEM_VIDEO = 11;         //stores the IPFS hash string pointing to the members campaign video - requires a string in param_string above
+
+    MEM_TRAITS = 12;        //stores the IPFS hash string pointing to the members personal traits form - requires a string in param_string above
+
+    MEM_GEN_DATA = 13;      //stores the IPFS hash string pointing to the members genetic data -  not valid coming from the website in this function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Functions for Custodians
+
+
+// Functions for Admins
