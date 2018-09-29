@@ -48,12 +48,13 @@ Name          |Type            |Description/Notes
 
     TELE_USER = 3;           //updates the telegram user-name for the member requires a string in param_string above
 
-
-
 		PROP_COUNT = 4;          //adds a proposal - not valid coming from the website in this function
-		VOTE_COUNT = 5;		       //adds a vote - not valid coming from the website in this function
-		COMP_SERVICE = 6;	      //adds a completed service count and a service value - not valid coming from the website in this function
-    COMP_RESEARCH = 7;      //adds a completed research participation count and value - not valid coming from the website in this function
+
+    VOTE_COUNT = 5;		       //adds a vote - not valid coming from the website in this function
+
+    COMP_SERVICE = 6;	       //adds a completed service count and a service value - not valid coming from the website in this function
+
+    COMP_RESEARCH = 7;       //adds a completed research participation count and value - not valid coming from the website in this function
 
     MEM_BALANCE = 8;        //adds or subtracts from the dac members EDNA account - requires "add" or "rem" in the param_string above and
                               an EDNA value in param_asset
