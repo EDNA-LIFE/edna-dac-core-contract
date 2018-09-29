@@ -27,9 +27,9 @@ void ednadac::create(account_name issuer,
     });
 }
 
-void ednadac::issue(account_name to, asset , string memo)
+void ednadac::issue(account_name to, asset quantity, string memo)
 {
-    auto sym = .symbol;
+    auto sym = quantity.symbol;
     eosio_assert(sym.is_valid(), "invalid symbol name");
     eosio_assert(memo.size() <= 256, "memo has more than 256 bytes");
 
@@ -40,46 +40,46 @@ void ednadac::issue(account_name to, asset , string memo)
     const auto &st = *existing;
 
     require_auth(st.issuer);
-    eosio_assert(.is_valid(), "invalid ");
-    eosio_assert(.amount > 0, "must issue positive ");
+    eosio_assert(quantity.is_valid(), "invalid quantity");
+    eosio_assert(quantity.amount > 0, "must issue positive quantity");
 
-    eosio_assert(.symbol == st.supply.symbol, "symbol precision mismatch");
-    eosio_assert(.amount <= st.max_supply.amount - st.supply.amount, " exceeds available supply");
+    eosio_assert(quantity.symbol == st.supply.symbol, "symbol precision mismatch");
+    eosio_assert(quantity.amount <= st.max_supply.amount - st.supply.amount, "quantity exceeds available supply");
 
     statstable.modify(st, 0, [&](auto &s) {
-        s.supply += ;
+        s.supply += quantity;
     });
 
-    add_balance(st.issuer, , st.issuer);
+    add_balance(st.issuer, quantity, st.issuer);
 
     if (to != st.issuer)
     {
-        SEND_INLINE_ACTION(*this, transfer, {st.issuer, N(active)}, {st.issuer, to, , memo});
+        SEND_INLINE_ACTION(*this, transfer, {st.issuer, N(active)}, {st.issuer, to, quantity, memo});
     }
 }
 
 void ednadac::transfer(account_name from,
                          account_name to,
-                         asset ,
+                         asset quantity,
                          string memo)
 {
     eosio_assert(from != to, "cannot transfer to self");
     require_auth(from);
     eosio_assert(is_account(to), "to account does not exist");
-    auto sym = .symbol.name();
+    auto sym = quantity.symbol.name();
     stats statstable(_self, sym);
     const auto &st = statstable.get(sym);
 
     require_recipient(from);
     require_recipient(to);
 
-    eosio_assert(.is_valid(), "invalid ");
-    eosio_assert(.amount > 0, "must transfer positive ");
-    eosio_assert(.symbol == st.supply.symbol, "symbol precision mismatch");
+    eosio_assert(quantity.is_valid(), "invalid quantity");
+    eosio_assert(quantity.amount > 0, "must transfer positive quantity");
+    eosio_assert(quantity.symbol == st.supply.symbol, "symbol precision mismatch");
     eosio_assert(memo.size() <= 256, "memo has more than 256 bytes");
 
-    sub_balance(from, );
-    add_balance(to, , from);
+    sub_balance(from, quantity);
+    add_balance(to, quantity, from);
 }
 
 void ednadac::setmemfund(account_name _memfund)
@@ -118,7 +118,7 @@ void ednadac::setmemfund(account_name _memfund)
  * Membership Management *******************************************************
  *******************************************************************************/
 
-void ednadac::addmember(account_name _account, string tele_user, asset ){
+void ednadac::addmember(account_name _account, string tele_user, asset dues){
   require_auth(_account);
   config_table c_t (_self, _self);
   auto c_itr = c_t.find(0);
@@ -131,16 +131,16 @@ void ednadac::addmember(account_name _account, string tele_user, asset ){
   auto itr = m_t.find(_account);
   eosio_assert(itr == m_t.end(), "Account already is a DAC member.");
 
-  auto sym = .symbol.name();
+  auto sym = dues.symbol.name();
   stats statstable(_self, sym);
   const auto &st = statstable.get(sym);
 
-  eosio_assert(.is_valid(), "invalid ");
-  eosio_assert(.amount > 0, "must transfer positive ");
-  eosio_assert(.symbol == st.supply.symbol, "symbol precision mismatch");
+  eosio_assert(dues.is_valid(), "invalid ");
+  eosio_assert(dues.amount > 0, "must transfer positive ");
+  eosio_assert(dues.symbol == st.supply.symbol, "symbol precision mismatch");
 
-  sub_balance(_account, );
-  add_balance(_mem_fund, , _account);
+  sub_balance(_account, dues);
+  add_balance(_mem_fund, dues, _account);
 
   m_t.emplace(_self, [&](auto &c) {
     c.member_id = m_t.available_primary_key();
@@ -211,22 +211,6 @@ void ednadac::renew_membership(account_name _account){
    renewal_due = true;
  }
  eosio_assert(renewal_due == false, "membership expired, please renew.");
-
- const uint8_t    = 1;
- const uint8_t    = 2;
- const uint8_t    = 3;
- const uint8_t    = 4;
- const uint8_t   COMP_SERVICE = 5;
- const uint8_t   COMP_RESEARCH = 6;
- const uint8_t   MEM_BALANCE = 7;
- const uint8_t   MEM_BIO = 8;
- const uint8_t   MEM_PHOTO = 9;
- const uint8_t   MEM_VIDEO = 10;
- const uint8_t   MEM_TRAITS = 11;
- const uint8_t   MEM_GEN_DATA = 12;
-
-
-
 
    m_t.modify(itr, _self, [&](auto &c) {
       if(_upd_type == MEM_STATUS){
@@ -320,19 +304,19 @@ void ednadac::new_general_proposal(account_name _from, string _title, string _te
   });
 }
 
-void ednadac::vote_gen_prop(account_name _account uint64_t prop_id, uint8_t vote ){
+void ednadac::vote_gen_prop(account_name _account, uint64_t prop_id, uint8_t vote ){
 
   config_table c_t(_self, _self);
   auto c_itr = c_t.find(0);
 
-  auto ttl_escalated = c_t.custodian_vote_ttl;
-  auto total_mem = c_t.member_count;
-  auto prop_to_cust_target = c_t.proposal_escalation;
-  auto target = ((prop_to_cust_target*1000)/(total_mem*1000))
+  auto ttl_escalated = c_itr->custodian_vote_ttl + now();
+  auto total_mem = c_itr->member_count;
+  auto prop_to_cust_target = c_itr->proposal_escalation;
+  auto target = ((prop_to_cust_target*1000)/(total_mem*1000));
 
   vote_table v_t(_self, _account);
   auto v_itr = v_t.find(prop_id);
-  if (v_itr == c_t.end())
+  if (v_itr == v_t.end())
   {
       v_t.emplace(_account, [&](auto &c) {
           c.vote_id = v_t.available_primary_key();
@@ -347,22 +331,23 @@ void ednadac::vote_gen_prop(account_name _account uint64_t prop_id, uint8_t vote
           if ((p.prop_gen_total_votes*1000) >= target){                         // I THINK this math is correct need to test
             p.prop_type = CUSTODIAL_MATTER;                                     //tag it as custodial and give the members a choice to hold or archive thir vote on this proposal
             p.prop_status = GEN_ESCALATED;
-            p.prop_next_action_date = ttl_escalated + now();
-          announce_table a_t(_self, _self);                                     //add the announcement
-            a_t.emplace(_self, [&](auto &c) {
-                c.announce_id = a_t.available_primary_key();
-                c.announce_type = GENERAL_PROPOSAL_ESCALTED;
-                c.announce_text = prop_id;
-                c.announce_ttl = vote;
+            p.prop_next_action_date = ttl_escalated;
+          news_table n_t(_self, _self);                                     //add the announcement
+            n_t.emplace(_self, [&](auto &c) {
+                c.news_id = n_t.available_primary_key();
+                c.news_type = GEN_PROP_ESCALATED;
+                c.news_text = prop_id;
+                c.news_ttl = vote;
             });
       }
-  }
-  else
-  {
+  });
+}
+else
+{
       v_t.modify(v_itr, _account, [&](auto &c) {
           c.how_vote = vote;
       });
-  }
+}
 
 }
 

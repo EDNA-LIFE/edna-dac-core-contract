@@ -37,7 +37,7 @@ class ednadac : public contract
     void addmember(account_name _account, string tele_user, asset quantity);
 
     // @abi action
-    void updatemember(account_name _account, string _upd_type, uint8_t _param_i8, uint32_t _param32, uint64_t _parm64, string _param_s, asset _param_asset);
+    void updatemember(account_name _account, uint8_t _upd_type, uint8_t _param_i8, uint32_t _param32, uint64_t _parm64, string _param_s, asset _param_asset);
 
     // @abi action
     void deletemember(account_name _account);
@@ -45,9 +45,14 @@ class ednadac : public contract
     // @abi action
     void renew_membership(account_name _account);
 
+    // @abi action
+    void archivemember(account_name _account);
 
     // @abi action
     void new_general_proposal(account_name _from, string _title, string _text);
+
+    // @abi action
+    void vote_gen_prop(account_name _account, uint64_t prop_id, uint8_t vote);
 
     // @abi action
     void general_proposal_check();
@@ -93,8 +98,6 @@ class ednadac : public contract
     const uint8_t   SERVICE_PROPOSAL = 4;
     const uint8_t   RESEARCH_PROPOSAL = 5;
     const uint8_t   IMPEACHMENT_PROCEEDING = 6;
-
-
 
     // Vote statuses
     const uint8_t   GEN_NEW = 1;
@@ -148,6 +151,14 @@ class ednadac : public contract
     const uint8_t   CUSTO_SITTING = 6;                                          // auto nominated
     const uint8_t   CUSTO_REMOVED = 7;                                          // can not be nominated
     const uint8_t   CUSTO_RETIRED = 8;                                          // can not be nominated
+
+    // types of news
+    const uint8_t   NEW_MEMBER = 1;
+    const uint8_t   NOMINATION = 2;
+    const uint8_t   CUST_RUNNING = 3;
+    const uint8_t   NEW_GEN_PROP = 4;
+    const uint8_t   GEN_PROP_ESCALATED = 5;
+
 
 
 // TABLE STRUCTURES
@@ -336,31 +347,32 @@ typedef eosio::multi_index<N(election_member_xrefs), election_member_xref> elect
   // @abi table services i64
 struct vote {
   uint64_t        vote_id;
-  uint64_t        prop_elect_id;
+  uint64_t        elect_id;
+  uint64_t        prop_id;
   uint8_t         prop_type;
   uint64_t        member_id;
   uint8_t         how_vote;
 
   uint64_t  primary_key() const { return vote_id; }
 
-  EOSLIB_SERIALIZE (vote, (vote_id)(prop_elect_id)(prop_type)(member_id)(how_vote));
+  EOSLIB_SERIALIZE (vote, (vote_id)(elect_id)(prop_id)(prop_type)(member_id)(how_vote));
   };
 
 typedef eosio::multi_index<N(votes), vote> vote_table;
 
 // @abi table services i64
-struct announce {
-uint64_t        announce_id;
-uint8_t         announce_type;
-string          announce_text;
-uint32_t        announce_ttl;
+struct news {
+uint64_t        news_id;
+uint8_t         news_type;
+string          news_text;
+uint32_t        news_ttl;
 
-uint64_t  primary_key() const { return announce_id; }
+uint64_t  primary_key() const { return news_id; }
 
-EOSLIB_SERIALIZE (announce, (announce_id)(announce_type)(announce_text)(announce_ttl));
+EOSLIB_SERIALIZE (news, (news_id)(news_type)(news_text)(news_ttl));
 };
 
-typedef eosio::multi_index<N(announcements), announce> announce_table;
+typedef eosio::multi_index<N(newss), news> news_table;
 
 
 
