@@ -348,6 +348,19 @@ struct vote {
 
 typedef eosio::multi_index<N(votes), vote> vote_table;
 
+// @abi table services i64
+struct announce {
+uint64_t        announce_id;
+uint8_t         announce_type;
+string          announce_text;
+uint32_t        announce_ttl;
+
+uint64_t  primary_key() const { return announce_id; }
+
+EOSLIB_SERIALIZE (announce, (announce_id)(announce_type)(announce_text)(announce_ttl));
+};
+
+typedef eosio::multi_index<N(announcements), announce> announce_table;
 
 
 
