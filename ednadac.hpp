@@ -43,19 +43,19 @@ class ednadac : public contract
     void deletemember(account_name _account);
 
     // @abi action
-    void renew_membership(account_name _account);
+    void renewmember(account_name _account);
 
     // @abi action
-    void archivemember(account_name _account);
+    void archivemem(account_name _account);
 
     // @abi action
-    void new_general_proposal(account_name _from, string _title, string _text);
+    void newgenprop(account_name _from, string _title, string _text);
 
     // @abi action
-    void vote_gen_prop(account_name _account, uint64_t prop_id, uint8_t vote);
+    void votegenprop(account_name _account, uint64_t prop_id, uint8_t vote);
 
     // @abi action
-    void general_proposal_check();
+    void genpropcheck();
 
     // @abi action
     void transfer(account_name from, account_name to, asset quantity, string memo);
@@ -91,38 +91,33 @@ class ednadac : public contract
     const uint8_t   MEM_TRAITS = 12;
     const uint8_t   MEM_GEN_DATA = 13;
 
-    // types of votes & proposals
-    const uint8_t   GENERAL_PROPOSAL = 1;
-    const uint8_t   CUSTODIAL_MATTER = 2;
-    const uint8_t   MEMBER_REFERENDUM = 3;
-    const uint8_t   SERVICE_PROPOSAL = 4;
-    const uint8_t   RESEARCH_PROPOSAL = 5;
-    const uint8_t   IMPEACHMENT_PROCEEDING = 6;
-
-    // Vote statuses
+    // proposal statuses
     const uint8_t   GEN_NEW = 1;
     const uint8_t   GEN_UNSUPPORTED = 2;
     const uint8_t   GEN_ESCALATED = 3;
-    const uint8_t   CUSTO_DEFEATED = 4;
-    const uint8_t   CUSTO_PASSED = 5;
-    const uint8_t   CUSTO_STALLED_1 = 6;
-    const uint8_t   CUSTO_STALLED_2 = 7;
-    const uint8_t   CUSTO_STALLED_3 = 8;
-    const uint8_t   REF_CREATED = 9;
-    const uint8_t   REF_DEFEATED = 10;
-    const uint8_t   REF_PASSED = 11;
+    const uint8_t   CUST_NEW = 4;
+    const uint8_t   CUSTO_DEFEATED = 5;
+    const uint8_t   CUSTO_PASSED = 6;
+    const uint8_t   CUSTO_STALLED_1 = 7;
+    const uint8_t   CUSTO_STALLED_2 = 8;
+    const uint8_t   CUSTO_STALLED_3 = 9;
+    const uint8_t   REF_CREATED = 10;
+    const uint8_t   REF_DEFEATED = 11;
+    const uint8_t   REF_PASSED = 12;
+    const uint8_t   IMPEACH_NEW = 13;
+    const uint8_t   IMPEACH_ENDED = 14;
 
     // service propsal statuses
-    const uint8_t   SERVE_NEW = 1;
-    const uint8_t   SERVE_DENIED = 2;
-    const uint8_t   SERVE_APPROVED = 3;
-    const uint8_t   SERVE_APPROVED_WITH_MOD = 4;
-    const uint8_t   SERVE_MOD_ACCEPTED = 5;
-    const uint8_t   SERVE_MOD_REJECTED = 6;
-    const uint8_t   SERVE_IN_PROGRESS = 7;
-    const uint8_t   SERVE_COMPLETED = 8;
-    const uint8_t   SERVE_PAY_SETTLED = 9;
-    const uint8_t   SERVE_UNDELIVERED = 10;
+    const uint8_t   SERV_NEW = 1;
+    const uint8_t   SERV_DENIED = 2;
+    const uint8_t   SERV_APPRIVED = 3;
+    const uint8_t   SERV_APPR_MOD = 4;
+    const uint8_t   SERV_MOD_ACCEPTED = 5;
+    const uint8_t   SERV_MOD_REJECTED = 6;
+    const uint8_t   SERV_IN_PROGR = 7;
+    const uint8_t   SERV_COMPLETED = 8;
+    const uint8_t   SERV_PAY_SETTLED = 9;
+    const uint8_t   SERV_UNDELIVERED = 10;
 
     // research propsal statuses
     const uint8_t   	RESEARCH_NEW = 1;
@@ -204,26 +199,37 @@ typedef eosio::multi_index<N(members), member> member_table;
   struct proposal {
     uint64_t          prop_id;
     uint64_t          sponsor_id;                                               //points to member_id
-    uint8_t           prop_type;                                                //points to const proposal types
     uint8_t           prop_status;                                              //points to const propsal statuses
     string            prop_title;
     string            prop_ipfs_text;                                           //ipfs storage hash string
     uint32_t          prop_gen_total_votes;
+    uint32_t          prop_gen_yes_count;
+    uint32_t          prop_gen_no_count;
     uint32_t          prop_cus_total_votes;
+    uint32_t          prop_cus_yes_count;
+    uint32_t          prop_cus_no_count;
     uint32_t          prop_ref_total_votes;
+    uint32_t          prop_ref_yes_count;
+    uint32_t          prop_ref_no_count;
     uint64_t          prop_next_action_date;
 
     uint64_t      primary_key() const { return prop_id; }
     uint64_t      by_status() const {return prop_status;}
 
-    EOSLIB_SERIALIZE (proposal, (prop_id)(sponsor_id)(prop_type)(prop_status)(prop_title)(prop_ipfs_text)(prop_next_action_date));
+    EOSLIB_SERIALIZE (proposal, (prop_id)(sponsor_id)(prop_status)(prop_title)(prop_ipfs_text)
+    (prop_gen_total_votes)(prop_gen_yes_count)(prop_gen_no_count)
+    (prop_cus_total_votes)(prop_cus_yes_count)(prop_cus_no_count)
+    ()()()()());
   };
 
 typedef eosio::multi_index<N(proposals), proposal,
     indexed_by<N(status),const_mem_fun<proposal, uint64_t, &proposal::by_status>>>proposal_table;
 
+    //local instances of the props table multi-index
+    proposal_table _props
+
   // @abi action
-  void proposal_by_type(uint8_t _type);
+  void propbytype(uint8_t _type);
 
   // @abi table services i64
   struct service {
@@ -261,29 +267,29 @@ typedef eosio::multi_index<N(services), service> service_table;
     uint64_t			number_of_opt_ins;
     uint8_t  			genome_type;
     string  			ipfs_hash_traits_sought;
-    string			  ipfs_hash_funding_source_disclosure;
-    string 			  ipfs_hash_research_purpose;
-    string  			ipfs_hash_publications_list;
-    string  			ipfs_hash_notes_comments;
+    string			  ipfs_fund_source_disclos;
+    string 			  ipfs_research_purpose;
+    string  			ipfs_pub_list;
+    string  			ipfs_notes;
     asset  			  proposed_payment;
     asset				  surety_bond_posted;
     uint8_t  			profit_sharing_offered;
     uint8_t  			agree_terms_of_service;
-    uint8_t  			agree_edna_intended_use_policy;
+    uint8_t  			agree_intended_use;
     uint8_t  			agree_edna_constitution;
     uint8_t  			agree_eos_constitution;
 
     uint64_t      primary_key() const { return research_id; }
     EOSLIB_SERIALIZE (research, (research_id)(edna_sponsor_id)(project_title)(research_status)(company_entity)(contact)(email)(telephone)(website)
-    (number_genomes_sought)(number_of_opt_ins)(genome_type)(ipfs_hash_traits_sought)(ipfs_hash_funding_source_disclosure)(ipfs_hash_research_purpose)
-    (ipfs_hash_publications_list)(ipfs_hash_notes_comments)(proposed_payment)(surety_bond_posted)(profit_sharing_offered)
-    (agree_terms_of_service)(agree_edna_intended_use_policy)(agree_edna_constitution)(agree_eos_constitution));
+    (number_genomes_sought)(number_of_opt_ins)(genome_type)(ipfs_hash_traits_sought)(ipfs_fund_source_disclos)(ipfs_research_purpose)
+    (ipfs_pub_list)(ipfs_notes)(proposed_payment)(surety_bond_posted)(profit_sharing_offered)
+    (agree_terms_of_service)(agree_intended_use)(agree_edna_constitution)(agree_eos_constitution));
   };
 
   typedef eosio::multi_index<N(researches), research> research_table;
 
   // @abi table services i64
-  struct research_committee {
+  struct rcommittee {
       uint64_t			committee_id;
       uint64_t			research_id;
       uint64_t			chairman_id;
@@ -300,22 +306,22 @@ typedef eosio::multi_index<N(services), service> service_table;
       uint64_t			member11_id;
 
     uint64_t      primary_key() const { return committee_id; }
-    EOSLIB_SERIALIZE (research_committee, (committee_id)(research_id)(chairman_id)(member1_id)(member2_id)(member3_id)(member4_id)(member5_id)
+    EOSLIB_SERIALIZE (rcommittee, (committee_id)(research_id)(chairman_id)(member1_id)(member2_id)(member3_id)(member4_id)(member5_id)
     (member6_id)(member7_id)(member8_id)(member9_id)(member10_id)(member11_id));
 
 };
-typedef eosio::multi_index<N(research_committees), research_committee> research_committee_table;
+typedef eosio::multi_index<N(rcommittees), rcommittee> rcommittee_table;
 
   // @abi table services i64
-  struct research_member_x_ref {
+  struct resmemxref {
       uint64_t			research_id;
       uint64_t			member_id;
 
     uint64_t      primary_key() const { return research_id; }
-    EOSLIB_SERIALIZE (research_member_x_ref, (research_id)(member_id));
+    EOSLIB_SERIALIZE (resmemxref, (research_id)(member_id));
 };
 
-typedef eosio::multi_index<N(research_member_x_refs), research_member_x_ref> research_member_x_ref_table;
+typedef eosio::multi_index<N(resmemxrefs), resmemxref> resmemxref_table;
 
 // @abi table services i64
 struct election{
@@ -331,18 +337,18 @@ typedef eosio::multi_index<N(elections), election> election_table;
 
 
 // @abi table services i64
-struct election_member_xref{
-  uint64_t            elect_member_xref_id;
+struct elemembxref{
+  uint64_t            elemembxref_id;
   uint64_t            election_id;
   uint64_t            memeber_id;
   uint32_t            votes;
   uint8_t             elected;
 
-uint64_t  primary_key() const { return elect_member_xref_id; }
-EOSLIB_SERIALIZE (election_member_xref, (elect_member_xref_id)(election_id)(memeber_id)(votes)(elected));
+uint64_t  primary_key() const { return elemembxref_id; }
+EOSLIB_SERIALIZE (elemembxref, (elemembxref_id)(election_id)(memeber_id)(votes)(elected));
 };
 
-typedef eosio::multi_index<N(election_member_xrefs), election_member_xref> election_member_xref_table;
+typedef eosio::multi_index<N(elemembxrefs), elemembxref> elemembxref_table;
 
   // @abi table services i64
 struct vote {
@@ -386,19 +392,19 @@ typedef eosio::multi_index<N(newss), news> news_table;
       uint32_t      mem_vote_ttl = (60 * 60 * 24 * 7);                          // time before a member proposal is removed or converted to a custodial vote
       uint32_t      custodian_vote_ttl = (60 * 60 * 24 * 2);                    // time betwwen stalled custodial votes
       uint64_t      referendum_passage = 51;                                    // % of membership that must approve or defeat a referendum
-      uint64_t      nominations_ttl = (60 * 60 * 24 * 3);
-      uint64_t      elections_ttl = (60 * 60 * 24 * 5);
-      uint8_t       custodian_count = 12;
+      uint64_t      nominations_ttl = (60 * 60 * 24 * 3);                       // the 'time window' for nominations to run for custodian
+      uint64_t      elections_ttl = (60 * 60 * 24 * 5);                         // the 'time window' for elections to occur
+      uint8_t       custodian_count = 12;                                       // the number of sitting custodians
       uint8_t       custodial_majority = 9;                                     // 9 of 12 must approve or defeat a custodial vote
       uint32_t      custodian_ttl = (60 * 60 * 24 * 30);                        // time between custodial elections
-      uint64_t      next_cust_election_due;                                     // datetime of next election
-      asset         dac_funds_main;
-      asset         dac_funds_approved_spend;
-      asset         mem_fee = asset{static_cast<int64_t>(1), string_to_symbol(4, "EDNA")};
-      account_name  mem_fund;                                              // minimum fee to this contract for membership
-      uint64_t      spare1;
-      uint64_t      spare2;
-      uint64_t      spare3;
+      uint64_t      next_election_due;                                          // datetime of next election
+      asset         dac_funds_main;                                             // the amount of edna in the ednadactokens account
+      asset         dac_funds_approved_spend;                                   // the amount of edna in the dac "checking account"
+      asset         mem_fee = asset{static_cast<int64_t>(1), string_to_symbol(4, "EDNA")}; // cost of membership for the mem_ttl timeframe
+      account_name  mem_fund;                                                   // storage account for membership dues
+      uint64_t      spare1;                                                     // placholder for future modifications
+      uint64_t      spare2;                                                     // placholder for future modifications
+      uint64_t      spare3;                                                     // placholder for future modifications
 
       uint64_t      primary_key() const { return config_id; }
 
@@ -469,5 +475,5 @@ const auto &ac = accountstable.get(sym);
 return ac.balance;
 }
 
-EOSIO_ABI( ednadac,(addmember)(deletemember)(renew_membership)(updatemember)(new_general_proposal)
-(general_proposal_check)(transfer))
+EOSIO_ABI( ednadac,(addmember)(deletemember)(renewmember)(updatemember)(newgenprop)
+(votegenprop)(transfer))
